@@ -238,11 +238,15 @@ lintcode = { -- solve premium questions on their free lintcode.com twin
 },
 ```
 
-- The statement and starter code come from [LintCode] and need no login.
-  Running and submitting do: run `:Leet lintcode login` and paste the value of
-  `@JWT:REFRESH_TOKEN` from [LintCode]'s local storage
-  (DevTools → Application → Local Storage → `https://www.lintcode.com`)
-  while signed in there.
+- The statement and starter code come from [LintCode] and need no login, so
+  your [LeetCode] cookie alone is enough to read premium questions.
+  Running and submitting them needs a [LintCode] login: run
+  `:Leet lintcode login` and paste the value of `@JWT:REFRESH_TOKEN` from
+  [LintCode]'s local storage (DevTools → Application → Local Storage →
+  `https://www.lintcode.com`) while signed in there, or a `Cookie` header
+  that carries [LintCode]'s `refresh` cookie.
+- The [LeetCode] cookie and the [LintCode] token are stored and sent
+  separately: logging in or out of one never touches the other.
 - The twin is found by its slug, then by an identical title, and is checked
   against the signature and examples [LeetCode] still shows for premium
   questions. The description header names the twin and how it was matched.

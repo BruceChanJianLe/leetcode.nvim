@@ -90,7 +90,7 @@ end
 function cmd.lintcode_login()
     local token = require("leetcode.lintcode.token")
 
-    secret_prompt("Enter LintCode token", function(value)
+    secret_prompt("Enter LintCode token or cookie", function(value)
         local err = token.set(value)
 
         if not err then

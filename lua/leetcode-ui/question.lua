@@ -341,17 +341,11 @@ function Question:mount()
         return pcall(vim.api.nvim_set_current_tabpage, tabp)
     end
 
-    local q = api_question.by_title_slug(self.cache.title_slug)
-    if q and providers.via_lintcode(q.is_paid_only) then
-        self.provider = providers.lintcode()
-        q = self.provider.fetch(self, q)
-        if not q then
-            return
-        end
-    elseif not q or q.is_paid_only and not config.auth.is_premium then
-        return log.warn("Question is for premium users only")
+    local provider, q = providers.open(self, api_question.by_title_slug(self.cache.title_slug))
+    if not provider then
+        return
     end
-    self.q = q
+    self.provider, self.q = provider, q
 
     if self:snippet() then
         self:handle_mount()

@@ -45,4 +45,12 @@ function M.jwt(name)
     return ("eyJhbGciOiJIUzI1NiJ9.%s.c2lnbmF0dXJl"):format(name)
 end
 
+---A JWT carrying `claims`, unsigned.
+---@param claims table
+---@return string
+function M.jwt_with(claims)
+    local payload = vim.base64.encode(vim.json.encode(claims))
+    return M.jwt((payload:gsub("%+", "-"):gsub("/", "_"):gsub("=", "")))
+end
+
 return M

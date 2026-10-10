@@ -65,13 +65,18 @@ function ConsoleLayout:run(submit)
         return
     end
 
+    local runner = Runner:init(self.question)
+    if not runner:ready() then
+        return
+    end
+
     if config.user.console.open_on_runcode then
         self:show()
     end
 
     self.result:focus()
 
-    Runner:init(self.question):run(submit)
+    runner:run(submit)
 end
 
 function ConsoleLayout:use_testcase()

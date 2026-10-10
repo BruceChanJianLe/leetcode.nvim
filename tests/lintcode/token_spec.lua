@@ -35,6 +35,39 @@ describe("lintcode token", function()
         assert.is_nil(token.parse(""))
     end)
 
+    it("accepts LintCode's cookie in place of the token", function()
+        local jwt = helpers.jwt("fromcookie")
+
+        assert.are.same(jwt, token.parse(("access_lifetime=500; refresh=%s; access=x"):format(jwt)))
+        assert.are.same(jwt, token.parse(("Cookie: sid=1; refresh=%s"):format(jwt)))
+        assert.are.same(jwt, token.parse(("refresh=%s"):format(jwt)))
+        assert.is_nil(token.parse(("access=%s; sid=1"):format(jwt)))
+        assert.is_nil(token.parse(("no_refresh=%s"):format(jwt)))
+    end)
+
+    it("refuses a short-lived access token with a hint", function()
+        local err =
+            token.set("Authorization: Bearer " .. helpers.jwt_with({ token_type = "access" }))
+
+        assert.truthy(err:find("access token", 1, true))
+        assert.are.same({}, refreshed)
+        assert.is_nil(token.read())
+    end)
+
+    it("explains where to find the token when the paste has none", function()
+        local err = token.set("csrftoken=abc; sessionid=def")
+
+        assert.truthy(err:find("@JWT:REFRESH_TOKEN", 1, true))
+        assert.truthy(err:find("refresh", 1, true))
+    end)
+
+    it("decodes the claims of a token", function()
+        local jwt = helpers.jwt_with({ token_type = "refresh", user_id = 7 })
+
+        assert.are.same({ token_type = "refresh", user_id = 7 }, token.claims(jwt))
+        assert.is_nil(token.claims(helpers.jwt("opaque")))
+    end)
+
     it("stores a refresh token LintCode accepts, readable by the owner only", function()
         local jwt = helpers.jwt("first")
 

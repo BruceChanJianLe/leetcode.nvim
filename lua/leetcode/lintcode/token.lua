@@ -16,16 +16,43 @@ local function file()
     return config.storage.cache:joinpath("lintcode_token")
 end
 
----Extracts a JWT from a pasted value: a bare token, a quoted token or `Bearer <token>`.
+---Extracts the refresh JWT from a pasted value: the token itself (as stored under
+---`@JWT:REFRESH_TOKEN`), quoted or prefixed with `Bearer`, or a `Cookie` header
+---carrying LintCode's `refresh` cookie.
 ---@param str string
 ---@return string|nil
 function Token.parse(str)
-    local token = vim.trim(str or "")
-    token = token:gsub("^[\"']", ""):gsub("[\"']$", ""):gsub("^[Bb]earer%s+", "")
+    local token = vim.trim(str or ""):gsub("^[Cc]ookie:%s*", "")
+    token = token:match("%f[%w_]refresh=([^;%s]+)") or token
+    token = token
+        :gsub("^[\"']", "")
+        :gsub("[\"']$", "")
+        :gsub("^[Aa]uthorization:%s*", "")
+        :gsub("^[Bb]earer%s+", "")
 
     if token:match("^[%w_-]+%.[%w_-]+%.[%w_-]+$") then
         return token
     end
+end
+
+---The claims of a JWT, when they can be decoded.
+---@param jwt string
+---@return table|nil
+function Token.claims(jwt)
+    local payload = jwt:match("^[^.]+%.([^.]+)%.")
+    if not payload or not vim.base64 then
+        return
+    end
+
+    payload = payload:gsub("-", "+"):gsub("_", "/")
+    payload = payload .. ("="):rep((4 - #payload % 4) % 4)
+
+    local ok, decoded = pcall(vim.base64.decode, payload)
+    if not ok then
+        return
+    end
+    local ok_json, claims = pcall(vim.json.decode, decoded)
+    return ok_json and type(claims) == "table" and claims or nil
 end
 
 ---@return string|nil
@@ -119,7 +146,14 @@ end
 function Token.set(str)
     local refresh = Token.parse(str)
     if not refresh then
-        return "paste the value of `@JWT:REFRESH_TOKEN` from LintCode's local storage"
+        return "no refresh token found. Paste `@JWT:REFRESH_TOKEN` from LintCode's local storage,"
+            .. " or a `Cookie` header with a `refresh` cookie"
+    end
+
+    local claims = Token.claims(refresh)
+    if claims and claims.token_type == "access" then
+        return "that is a short-lived access token. Paste the refresh token"
+            .. " (`@JWT:REFRESH_TOKEN` or the `refresh` cookie)"
     end
 
     local tokens, err = api.refresh_token(refresh)

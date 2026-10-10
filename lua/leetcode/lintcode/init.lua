@@ -98,6 +98,13 @@ function LintCode.note(question)
     }
 end
 
+---Reading needs no account; running and submitting do.
+function LintCode.ready()
+    if not token.read() then
+        return "Log in to LintCode to run and submit premium questions: `:Leet lintcode login`"
+    end
+end
+
 function LintCode.status(question)
     return status.get(question.q.title_slug)
 end

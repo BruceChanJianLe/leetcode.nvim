@@ -28,6 +28,18 @@ Runner.stop = function()
     Runner.running = false
 end
 
+---Whether the question's provider can run code now, hinting what to do if not.
+---@return boolean
+function Runner:ready()
+    local provider = self.question.provider
+    local hint = provider.ready and provider.ready(self.question)
+    if hint then
+        log.warn(hint)
+        return false
+    end
+    return true
+end
+
 function Runner:handle(submit)
     Runner.running = true
     local question = self.question
