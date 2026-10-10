@@ -4,6 +4,7 @@ local Info = require("leetcode-ui.popup.info")
 local Object = require("nui.object")
 
 local api_question = require("leetcode.api.question")
+local providers = require("leetcode.provider")
 local utils = require("leetcode.utils")
 local ui_utils = require("leetcode-ui.utils")
 local config = require("leetcode.config")
@@ -19,21 +20,24 @@ local log = require("leetcode.logger")
 ---@field console lc.ui.Console
 ---@field lang string
 ---@field cache lc.cache.Question
+---@field provider lc.Provider
 ---@field reset boolean
 local Question = Object("LeetQuestion")
 
 ---@param raw? boolean
 function Question:snippet(raw)
-    local snippets = self.q.code_snippets ~= vim.NIL and self.q.code_snippets or {}
-    local snip = vim.tbl_filter(function(snip)
-        return snip.lang_slug == self.lang
-    end, snippets)[1]
+    local snip = self.provider.snippet(self, self.lang)
     if not snip then
         return
     end
 
-    local code = snip.code:gsub("\r\n", "\n")
+    local code = snip:gsub("\r\n", "\n")
     return raw and code or self:injector(code)
+end
+
+---@return string
+function Question:link()
+    return self.provider.link(self)
 end
 
 ---@param start_i integer
@@ -69,17 +73,27 @@ end
 function Question:path()
     local lang = utils.get_lang(self.lang)
     local alt = lang.alt and ("." .. lang.alt) or ""
+    local tag = self.provider.filename_tag
 
     -- handle legacy file names first
-    local fn_legacy = --
-        ("%s.%s-%s.%s"):format(self.q.frontend_id, self.q.title_slug, lang.slug, lang.ft)
-    self.file = config.storage.home:joinpath(fn_legacy)
+    if not tag then
+        local fn_legacy = --
+            ("%s.%s-%s.%s"):format(self.q.frontend_id, self.q.title_slug, lang.slug, lang.ft)
+        self.file = config.storage.home:joinpath(fn_legacy)
 
-    if self.file:exists() then
-        return self.file:absolute(), true
+        if self.file:exists() then
+            return self.file:absolute(), true
+        end
     end
 
-    local fn = ("%s.%s%s.%s"):format(self.q.frontend_id, self.q.title_slug, alt, lang.ft)
+    -- solutions written against another provider's signatures never share a file
+    local fn = ("%s.%s%s%s.%s"):format(
+        self.q.frontend_id,
+        self.q.title_slug,
+        tag and ("." .. tag) or "",
+        alt,
+        lang.ft
+    )
     self.file = config.storage.home:joinpath(fn)
     local existed = self.file:exists()
 
@@ -141,7 +155,9 @@ function Question:open_buffer(existed)
         self:editor_fold_imports(false)
     end
 
-    if config.user.editor.reset_previous_code and (existed and self.cache.status == "ac") then
+    if
+        config.user.editor.reset_previous_code and (existed and self.provider.status(self) == "ac")
+    then
         self:reset_previous_code()
     end
 end
@@ -326,7 +342,13 @@ function Question:mount()
     end
 
     local q = api_question.by_title_slug(self.cache.title_slug)
-    if not q or q.is_paid_only and not config.auth.is_premium then
+    if q and providers.via_lintcode(q.is_paid_only) then
+        self.provider = providers.lintcode()
+        q = self.provider.fetch(self, q)
+        if not q then
+            return
+        end
+    elseif not q or q.is_paid_only and not config.auth.is_premium then
         return log.warn("Question is for premium users only")
     end
     self.q = q
@@ -454,6 +476,7 @@ end)
 function Question:init(problem)
     self.cache = problem
     self.lang = config.lang
+    self.provider = providers.leetcode()
 end
 
 ---@type fun(question: lc.cache.Question): lc.ui.Question

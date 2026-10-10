@@ -2,9 +2,7 @@ local ConsolePopup = require("leetcode-ui.popup.console")
 local ResultLayout = require("leetcode-ui.renderer.result")
 local t = require("leetcode.translator")
 
-local problemlist = require("leetcode.cache.problemlist")
 local log = require("leetcode.logger")
-local config = require("leetcode.config")
 
 ---@class lc.ui.Console.ResultPopup : lc.ui.Console.Popup
 ---@field renderer lc.ui.Result
@@ -21,11 +19,8 @@ function ResultPopup:handle(item)
     end
 
     if item._.submission then
-        local status = item.status_code == 10 and "ac" or "notac"
-        problemlist.change_status(self.console.question.q.title_slug, status)
-        if status == "ac" then
-            config.stats.update_streak()
-        end
+        local question = self.console.question
+        question.provider.record_status(question, item.status_code == 10 and "ac" or "notac")
     end
 
     self:draw()

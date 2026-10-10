@@ -1,13 +1,7 @@
 ---@module 'plenary'
 
 local log = require("leetcode.logger")
-local interpreter = require("leetcode.api.interpreter")
-local config = require("leetcode.config")
 local Judge = require("leetcode.logger.spinner.judge")
-
----@type Path
-local leetbody = config.storage.cache:joinpath("body")
-leetbody:touch()
 
 ---@class lc.Runner
 ---@field question lc.ui.Question
@@ -68,8 +62,7 @@ function Runner:handle(submit)
         end
     end
 
-    leetbody:write(vim.json.encode(body), "w")
-    interpreter.run(submit, question, leetbody:absolute(), callback)
+    question.provider.run(question, submit, body, callback)
 end
 
 ---@param question lc.ui.Question

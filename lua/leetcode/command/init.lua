@@ -30,10 +30,9 @@ function cmd.problems(options)
     picker.question(p, options)
 end
 
----@param cb? function
-function cmd.cookie_prompt(cb)
-    local cookie = require("leetcode.cache.cookie")
-
+---@param title string
+---@param on_submit fun(value: string)
+local function secret_prompt(title, on_submit)
     local popup_options = {
         relative = "editor",
         position = {
@@ -44,7 +43,7 @@ function cmd.cookie_prompt(cb)
         border = {
             style = "rounded",
             text = {
-                top = (" %s "):format(t("Enter cookie")),
+                top = (" %s "):format(t(title)),
                 top_align = "left",
             },
         },
@@ -56,18 +55,7 @@ function cmd.cookie_prompt(cb)
     local NuiInput = require("nui.input")
     local input = NuiInput(popup_options, {
         prompt = " 󰆘 ",
-        on_submit = function(value)
-            local err = cookie.set(value)
-
-            if not err then
-                log.info("Sign-in successful")
-                cmd.start_user_session()
-            else
-                log.error("Sign-in failed: " .. err)
-            end
-
-            pcall(cb, not err and true or false)
-        end,
+        on_submit = on_submit,
     })
 
     input:mount()
@@ -79,6 +67,87 @@ function cmd.cookie_prompt(cb)
     input:on(event.BufLeave, function()
         input:unmount()
     end)
+end
+
+---@param cb? function
+function cmd.cookie_prompt(cb)
+    local cookie = require("leetcode.cache.cookie")
+
+    secret_prompt("Enter cookie", function(value)
+        local err = cookie.set(value)
+
+        if not err then
+            log.info("Sign-in successful")
+            cmd.start_user_session()
+        else
+            log.error("Sign-in failed: " .. err)
+        end
+
+        pcall(cb, not err and true or false)
+    end)
+end
+
+function cmd.lintcode_login()
+    local token = require("leetcode.lintcode.token")
+
+    secret_prompt("Enter LintCode token", function(value)
+        local err = token.set(value)
+
+        if not err then
+            log.info("LintCode token saved")
+        else
+            log.error("LintCode sign-in failed: " .. err)
+        end
+    end)
+end
+
+function cmd.lintcode_logout()
+    require("leetcode.lintcode.token").delete()
+    log.info("LintCode token deleted")
+end
+
+---@param options table<string, string[]>
+---@return string|nil
+local function lintcode_slug(options)
+    local slug = options.slug and options.slug[1]
+    if slug then
+        return slug
+    end
+
+    local q = require("leetcode.utils").curr_question()
+    return q and q.q.title_slug
+end
+
+---@param options table<string, string[]>
+function cmd.lintcode_map(options)
+    local id = tonumber(options.id and options.id[1] or "")
+    if not id then
+        return log.error("Usage: `Leet lintcode map id=<lintcode id> [slug=<leetcode slug>]`")
+    end
+
+    local slug = lintcode_slug(options)
+    if not slug then
+        return
+    end
+
+    require("leetcode.lintcode.resolver").set(slug, { id = id, source = "user" })
+    log.info(
+        ("`%s` now opens LintCode problem %d. Reopen the question to load it."):format(slug, id)
+    )
+end
+
+---@param options table<string, string[]>
+function cmd.lintcode_unmap(options)
+    local slug = lintcode_slug(options)
+    if not slug then
+        return
+    end
+
+    if require("leetcode.lintcode.resolver").unset(slug) then
+        log.info(("Removed the LintCode mapping of `%s`"):format(slug))
+    else
+        log.warn(("`%s` has no LintCode mapping"):format(slug))
+    end
 end
 
 function cmd.sign_out()
@@ -296,19 +365,20 @@ function cmd.open()
     local q = utils.curr_question()
 
     if q then
+        local link = q:link()
         if vim.ui.open then
-            vim.ui.open(q.cache.link)
+            vim.ui.open(link)
         else
             local command
             local os_name = vim.loop.os_uname().sysname
 
             if os_name == "Linux" then
-                command = string.format("xdg-open '%s'", q.cache.link)
+                command = string.format("xdg-open '%s'", link)
             elseif os_name == "Darwin" then
-                command = string.format("open '%s'", q.cache.link)
+                command = string.format("open '%s'", link)
             else
                 -- Fallback to Windows if uname is not available or does not match Linux/Darwin.
-                command = string.format("start \"\" \"%s\"", q.cache.link)
+                command = string.format("start \"\" \"%s\"", link)
             end
 
             vim.fn.jobstart(command, { detach = true })
@@ -333,6 +403,9 @@ function cmd.last_submit()
     local q = utils.curr_question()
     if not q then
         return
+    end
+    if q.provider.name ~= "leetcode" then
+        return log.warn("`Leet last_submit` only works for questions solved on LeetCode")
     end
 
     local question_api = require("leetcode.api.question")
@@ -647,6 +720,18 @@ cmd.commands = {
     cookie = {
         update = { cmd.cookie_prompt },
         delete = { cmd.sign_out },
+    },
+    lintcode = {
+        login = { cmd.lintcode_login },
+        logout = { cmd.lintcode_logout },
+        map = {
+            cmd.lintcode_map,
+            _args = arguments.lintcode_map,
+        },
+        unmap = {
+            cmd.lintcode_unmap,
+            _args = arguments.lintcode_unmap,
+        },
     },
     cache = {
         update = { cmd.cache_update },

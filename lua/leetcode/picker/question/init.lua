@@ -4,6 +4,7 @@ local ui_utils = require("leetcode-ui.utils")
 local utils = require("leetcode.utils")
 local Question = require("leetcode-ui.question")
 local Picker = require("leetcode.picker")
+local providers = require("leetcode.provider")
 
 ---@class leet.Picker.Question: leet.Picker
 local P = {}
@@ -42,14 +43,22 @@ end
 ---@return { entry: any, value: lc.cache.Question }[]
 function P.items(content, opts)
     local filtered = P.filter(content, opts)
+    local lintcode = providers.via_lintcode(true) and require("leetcode.lintcode.status").read()
+        or {}
+
     return vim.tbl_map(function(item)
-        return { entry = P.entry(item), value = item }
+        return { entry = P.entry(item, lintcode), value = item }
     end, filtered)
 end
 
 ---@param question lc.cache.Question
-local function display_user_status(question)
+---@param lintcode table<string, string> status of premium questions solved on LintCode
+local function display_user_status(question, lintcode)
     if question.paid_only then
+        local solved = config.icons.hl.status[lintcode[question.title_slug]]
+        if solved then
+            return solved
+        end
         return config.auth.is_premium and config.icons.hl.unlock or config.icons.hl.lock
     end
 
@@ -71,9 +80,11 @@ local function display_question(question)
     return unpack({ index, title, ac_rate })
 end
 
-function P.entry(item)
+---@param item lc.cache.Question
+---@param lintcode? table<string, string>
+function P.entry(item, lintcode)
     return {
-        display_user_status(item),
+        display_user_status(item, lintcode or {}),
         display_difficulty(item),
         display_question(item),
     }
@@ -90,7 +101,7 @@ function P.ordinal(item)
 end
 
 function P.select(selection, close)
-    if selection.paid_only and not config.auth.is_premium then
+    if providers.is_locked(selection.paid_only) then
         return log.warn("Question is for premium users only")
     end
     if close then

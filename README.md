@@ -77,6 +77,10 @@ To see full configuration types see [template.lua](./lua/leetcode/config/templat
         translate_problems = true, ---@type boolean
     },
 
+    lintcode = { -- solve premium questions on their free lintcode.com twin
+        enabled = false, ---@type boolean
+    },
+
     ---@type lc.storage
     storage = {
         home = vim.fn.stdpath("data") .. "/leetcode",
@@ -222,6 +226,34 @@ cn = { -- leetcode.cn
     translate_problems = true, ---@type boolean
 },
 ```
+
+### lintcode
+
+Open [LeetCode] Premium questions on their free [LintCode] twin when your
+account has no Premium. Free questions keep using [LeetCode] as usual.
+
+```lua
+lintcode = { -- solve premium questions on their free lintcode.com twin
+    enabled = false, ---@type boolean
+},
+```
+
+- The statement and starter code come from [LintCode] and need no login.
+  Running and submitting do: run `:Leet lintcode login` and paste the value of
+  `@JWT:REFRESH_TOKEN` from [LintCode]'s local storage
+  (DevTools → Application → Local Storage → `https://www.lintcode.com`)
+  while signed in there.
+- The twin is found by its slug, then by an identical title, and is checked
+  against the signature and examples [LeetCode] still shows for premium
+  questions. The description header names the twin and how it was matched.
+  When nothing matches, map it by hand with `:Leet lintcode map`.
+- [LintCode] versions can differ from [LeetCode]'s (signatures, input
+  formats, sometimes the expected answer), so solutions are kept in their own
+  `*.lintcode.*` files.
+- Some twins are VIP-only on [LintCode] too and cannot be opened.
+- Questions solved on [LintCode] are tracked locally, never sent to [LeetCode].
+- [LintCode] has no public API: this uses the endpoints its website uses,
+  which may change without notice.
 
 ### storage
 
@@ -405,6 +437,15 @@ image_support = true,
 - `cache`
   - `update` fetches all available problems and updates the local cache of [leetcode.nvim]
 
+- `lintcode` see [`lintcode`](#lintcode)
+  - `login` opens a prompt to enter a [LintCode] token
+
+  - `logout` deletes the stored [LintCode] token
+
+  - `map` opens a premium question on a given [LintCode] problem
+
+  - `unmap` forgets the [LintCode] problem of a question
+
 #### Some commands can take optional arguments. To stack argument values separate them by a `,`
 
 - `Leet list`
@@ -417,6 +458,14 @@ image_support = true,
 
   ```
   Leet random status=<status> difficulty=<difficulty> tags=<tags>
+  ```
+
+- `Leet lintcode map` and `Leet lintcode unmap` act on the current question,
+  or on the question given by its [LeetCode] slug
+
+  ```
+  Leet lintcode map id=<lintcode problem id> slug=<leetcode slug>
+  Leet lintcode unmap slug=<leetcode slug>
   ```
 
 ## 🚀 Usage
@@ -533,6 +582,7 @@ You can then exit [leetcode.nvim] using `:Leet exit` command
 [lazy.nvim]: https://github.com/folke/lazy.nvim
 [leetcode]: https://leetcode.com
 [leetcode.cn]: https://leetcode.cn
+[lintcode]: https://www.lintcode.com
 [leetcode.nvim]: https://github.com/kawre/leetcode.nvim
 [neovim]: https://github.com/neovim/neovim
 [nerd-font]: https://www.nerdfonts.com

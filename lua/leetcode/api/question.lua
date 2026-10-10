@@ -68,7 +68,7 @@ function question.random(filters)
         }
     end
 
-    if not config.auth.is_premium and q.paid_only then
+    if require("leetcode.provider").is_locked(q.paid_only) then
         err = err or {}
         err.msg = "Drawn question is for premium users only. Please try again"
         err.lvl = vim.log.levels.WARN

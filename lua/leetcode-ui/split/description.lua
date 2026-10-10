@@ -120,7 +120,7 @@ function Description:populate()
         position = "center",
     })
 
-    header:append(self.question.cache.link or "", "leetcode_alt")
+    header:append(self.question:link() or "", "leetcode_alt")
     header:endgrp()
 
     header:insert(Padding(1))
@@ -132,6 +132,12 @@ function Description:populate()
     end
     header:endgrp()
 
+    local provider = self.question.provider
+    for _, line in ipairs(provider.note and provider.note(self.question) or {}) do
+        header:append(line, "leetcode_alt")
+        header:endgrp()
+    end
+
     local show_stats = self.show_stats
 
     if show_stats then
@@ -140,8 +146,9 @@ function Description:populate()
         header:append("????", "leetcode_list")
     end
 
-    if config.icons.hl.status[self.question.cache.status] then
-        local s = config.icons.hl.status[self.question.cache.status]
+    local status = self.question.provider.status(self.question)
+    if config.icons.hl.status[status] then
+        local s = config.icons.hl.status[status]
         header:append(" "):append(s[1], s[2])
     end
 

@@ -39,33 +39,38 @@ function ResultLayout:handle_accepted(item)
     local header = Header(item)
     self:insert(header)
 
-    --------------------------------------------
-    --- Runtime
-    --------------------------------------------
-    local runtime = Lines()
-    local runtime_ms = item.display_runtime or vim.split(item.status_runtime, " ")[1] or "NIL"
-    runtime:append(runtime_ms):append(" ms", "leetcode_alt")
-    runtime:endl()
-
-    runtime:append(
-        ("%s %.2f%% "):format(t("Beats"), item.runtime_percentile),
-        perc_hi(item.runtime_percentile)
-    )
-
     local lang = utils.get_lang_by_name(item.pretty_lang)
     local lang_text = { item.pretty_lang, "Structure" }
     if lang then
         lang_text = { lang.icon .. " " .. lang.lang, lang.hl or "Structure" }
     end
 
-    if config.translator then
-        runtime
-            :append("使用 ", "leetcode_normal")
-            :append(unpack(lang_text))
-            :append(" 的用户", "leetcode_normal")
-    else
-        runtime:append("of users with ", "leetcode_normal"):append(unpack(lang_text))
+    ---@param lines lc.ui.Lines
+    ---@param perc any not every judge reports percentiles
+    local function beats(lines, perc)
+        if type(perc) ~= "number" then
+            return
+        end
+
+        lines:endl()
+        lines:append(("%s %.2f%% "):format(t("Beats"), perc), perc_hi(perc))
+        if config.translator then
+            lines
+                :append("使用 ", "leetcode_normal")
+                :append(unpack(lang_text))
+                :append(" 的用户", "leetcode_normal")
+        else
+            lines:append("of users with ", "leetcode_normal"):append(unpack(lang_text))
+        end
     end
+
+    --------------------------------------------
+    --- Runtime
+    --------------------------------------------
+    local runtime = Lines()
+    local runtime_ms = item.display_runtime or vim.split(item.status_runtime, " ")[1] or "NIL"
+    runtime:append(runtime_ms):append(" ms", "leetcode_alt")
+    beats(runtime, item.runtime_percentile)
 
     local runtime_title = Line():append("󰓅 " .. t("Runtime"))
     self:insert(Pre(runtime_title, runtime))
@@ -77,20 +82,7 @@ function ResultLayout:handle_accepted(item)
     item.status_memory = item.status_memory:gsub("(%d+)%s*(%a+)", "%1 %2")
     local s_mem = vim.split(item.status_memory, " ")
     memory:append(s_mem[1] .. " "):append(s_mem[2], "leetcode_alt")
-    memory:endl()
-
-    memory:append(
-        ("%s %.2f%% "):format(t("Beats"), item.memory_percentile),
-        perc_hi(item.memory_percentile)
-    )
-    if config.translator then
-        memory
-            :append("使用 ", "leetcode_normal")
-            :append(unpack(lang_text))
-            :append(" 的用户", "leetcode_normal")
-    else
-        memory:append("of users with ", "leetcode_normal"):append(unpack(lang_text))
-    end
+    beats(memory, item.memory_percentile)
 
     local memory_title = Line():append("󰍛 " .. t("Memory"))
     self:insert(Pre(memory_title, memory))

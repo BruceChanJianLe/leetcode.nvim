@@ -95,4 +95,13 @@ arguments.session_create = {
     name = {},
 }
 
+arguments.lintcode_map = {
+    id = {},
+    slug = {},
+}
+
+arguments.lintcode_unmap = {
+    slug = {},
+}
+
 return arguments
