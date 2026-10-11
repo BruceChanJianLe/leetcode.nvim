@@ -25,12 +25,13 @@ describe("lintcode token", function()
         helpers.restore(mocks)
     end)
 
-    it("accepts the pasted value in the shapes browsers copy it", function()
+    it("accepts the raw refresh token from local storage", function()
         local jwt = helpers.jwt("eyJ0b2tlbl90eXBlIjoicmVmcmVzaCJ9")
 
         assert.are.same(jwt, token.parse(jwt))
-        assert.are.same(jwt, token.parse(("  \"%s\"\n"):format(jwt)))
-        assert.are.same(jwt, token.parse("Bearer " .. jwt))
+        assert.are.same(jwt, token.parse(("  %s\n"):format(jwt)))
+        assert.is_nil(token.parse("Bearer " .. jwt))
+        assert.is_nil(token.parse(("\"%s\""):format(jwt)))
         assert.is_nil(token.parse("LEETCODE_SESSION=abc; csrftoken=def"))
         assert.is_nil(token.parse(""))
     end)
@@ -46,8 +47,7 @@ describe("lintcode token", function()
     end)
 
     it("refuses a short-lived access token with a hint", function()
-        local err =
-            token.set("Authorization: Bearer " .. helpers.jwt_with({ token_type = "access" }))
+        local err = token.set(helpers.jwt_with({ token_type = "access" }))
 
         assert.truthy(err:find("access token", 1, true))
         assert.are.same({}, refreshed)

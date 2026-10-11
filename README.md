@@ -238,24 +238,26 @@ lintcode = { -- solve premium questions on their free lintcode.com twin
 },
 ```
 
-- The statement and starter code come from [LintCode] and need no login, so
-  your [LeetCode] cookie alone is enough to read premium questions.
-  Running and submitting them needs a [LintCode] login: run
-  `:Leet lintcode login` and paste the value of `@JWT:REFRESH_TOKEN` from
-  [LintCode]'s local storage (DevTools → Application → Local Storage →
-  `https://www.lintcode.com`) while signed in there, or a `Cookie` header
-  that carries [LintCode]'s `refresh` cookie.
+- It is opt-in: with the default `enabled = false`, premium questions stay
+  locked exactly as before.
+- With only your [LeetCode] cookie, premium questions open read-only: the
+  statement and starter code come from [LintCode] and need no login, but
+  running and submitting them asks you to run `:Leet lintcode login` first.
+- Running and submitting needs a [LintCode] login: run `:Leet lintcode login`
+  and paste the value of `@JWT:REFRESH_TOKEN` from [LintCode]'s local storage
+  (DevTools → Application → Local Storage → `https://www.lintcode.com`) while
+  signed in there, or a `Cookie` header or cookie string that carries
+  [LintCode]'s `refresh` cookie.
 - The [LeetCode] cookie and the [LintCode] token are stored and sent
   separately: logging in or out of one never touches the other.
-- The twin is found by its slug, then by an identical title, and is checked
-  against the signature and examples [LeetCode] still shows for premium
-  questions. The description header names the twin and how it was matched.
-  When nothing matches, map it by hand with `:Leet lintcode map`.
+- The twin is found by its stored match from an earlier visit, then by
+  [LintCode]'s redirect for the [LeetCode] slug, then by the only [LintCode]
+  problem with an identical title. When nothing matches, open it on
+  [LintCode] in the browser.
 - [LintCode] versions can differ from [LeetCode]'s (signatures, input
   formats, sometimes the expected answer), so solutions are kept in their own
   `*.lintcode.*` files.
 - Some twins are VIP-only on [LintCode] too and cannot be opened.
-- Questions solved on [LintCode] are tracked locally, never sent to [LeetCode].
 - [LintCode] has no public API: this uses the endpoints its website uses,
   which may change without notice.
 
@@ -446,10 +448,6 @@ image_support = true,
 
   - `logout` deletes the stored [LintCode] token
 
-  - `map` opens a premium question on a given [LintCode] problem
-
-  - `unmap` forgets the [LintCode] problem of a question
-
 #### Some commands can take optional arguments. To stack argument values separate them by a `,`
 
 - `Leet list`
@@ -462,14 +460,6 @@ image_support = true,
 
   ```
   Leet random status=<status> difficulty=<difficulty> tags=<tags>
-  ```
-
-- `Leet lintcode map` and `Leet lintcode unmap` act on the current question,
-  or on the question given by its [LeetCode] slug
-
-  ```
-  Leet lintcode map id=<lintcode problem id> slug=<leetcode slug>
-  Leet lintcode unmap slug=<leetcode slug>
   ```
 
 ## 🚀 Usage

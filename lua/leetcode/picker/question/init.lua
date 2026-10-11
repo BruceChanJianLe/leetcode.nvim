@@ -43,22 +43,14 @@ end
 ---@return { entry: any, value: lc.cache.Question }[]
 function P.items(content, opts)
     local filtered = P.filter(content, opts)
-    local lintcode = providers.via_lintcode(true) and require("leetcode.lintcode.status").read()
-        or {}
-
     return vim.tbl_map(function(item)
-        return { entry = P.entry(item, lintcode), value = item }
+        return { entry = P.entry(item), value = item }
     end, filtered)
 end
 
 ---@param question lc.cache.Question
----@param lintcode table<string, string> status of premium questions solved on LintCode
-local function display_user_status(question, lintcode)
+local function display_user_status(question)
     if question.paid_only then
-        local solved = config.icons.hl.status[lintcode[question.title_slug]]
-        if solved then
-            return solved
-        end
         return config.auth.is_premium and config.icons.hl.unlock or config.icons.hl.lock
     end
 
@@ -80,11 +72,9 @@ local function display_question(question)
     return unpack({ index, title, ac_rate })
 end
 
----@param item lc.cache.Question
----@param lintcode? table<string, string>
-function P.entry(item, lintcode)
+function P.entry(item)
     return {
-        display_user_status(item, lintcode or {}),
+        display_user_status(item),
         display_difficulty(item),
         display_question(item),
     }

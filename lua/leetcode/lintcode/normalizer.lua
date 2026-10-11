@@ -100,12 +100,7 @@ function N.question(q, problem, mapping)
         nq.similar = {}
     end
 
-    nq.lintcode = {
-        id = mapping.id,
-        title = str(problem.title) or "",
-        source = mapping.source,
-        confidence = mapping.confidence or "none",
-    }
+    nq.lintcode = { id = mapping.id }
 
     return nq
 end

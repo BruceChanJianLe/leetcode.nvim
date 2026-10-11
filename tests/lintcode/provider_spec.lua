@@ -251,31 +251,25 @@ describe("lintcode provider", function()
         assert.is_nil(lintcode.snippet(question, "rust"))
     end)
 
-    it("links and labels the LintCode twin", function()
+    it("links the LintCode twin", function()
         local question = fake_question()
-        question.q.lintcode = { id = 920, title = "Rooms", source = "slug", confidence = "example" }
+        question.q.lintcode = { id = 920 }
 
         assert.are.same("https://www.lintcode.com/problem/920/", lintcode.link(question))
-        assert.are.same(
-            { "via LintCode 920 · Rooms", "(same slug, same example)" },
-            lintcode.note(question)
-        )
     end)
 
-    it("keeps LintCode's solved state apart from LeetCode's", function()
+    it("does not track solved state for LintCode twins", function()
         local question = fake_question()
 
         lintcode.record_status(question, "ac")
-        lintcode.record_status(question, "notac")
 
-        assert.are.same("ac", lintcode.status(question))
-        assert.are.same({ ["sum-of-pairs"] = "ac" }, require("leetcode.lintcode.status").read())
+        assert.is_nil(lintcode.status(question))
     end)
 
     it("serves the twin's statement for a premium question", function()
         helpers.mock(mocks, resolver, "resolve", function()
             return {
-                mapping = { id = 7, source = "title", confidence = "none" },
+                mapping = { id = 7 },
                 problem = {
                     id = 7,
                     title = "Pair Sums",
@@ -299,7 +293,7 @@ describe("lintcode provider", function()
         assert.is_nil(lintcode.fetch(fake_question(), { title_slug = "x", title = "X" }))
 
         helpers.mock(mocks, resolver, "resolve", function()
-            return { mapping = { id = 461, source = "slug" }, err = { code = 1001, msg = "VIP" } }
+            return { mapping = { id = 461 }, err = { code = 1001, msg = "VIP" } }
         end)
         assert.is_nil(lintcode.fetch(fake_question(), { title_slug = "x", title = "X" }))
     end)

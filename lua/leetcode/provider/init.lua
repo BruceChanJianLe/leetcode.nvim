@@ -7,7 +7,6 @@ local config = require("leetcode.config")
 ---@field snippet fun(question: lc.ui.Question, lang: lc.lang): string|nil
 ---@field run fun(question: lc.ui.Question, submit: boolean, body: lc.Interpret.body, callback: fun(item?: lc.interpreter_response, state?: string, err?: lc.err))
 ---@field link fun(question: lc.ui.Question): string
----@field note? fun(question: lc.ui.Question): string[]|nil lines shown under the title
 ---@field ready? fun(question: lc.ui.Question): string|nil why running is not possible yet
 ---@field status fun(question: lc.ui.Question): string|nil solved status
 ---@field record_status fun(question: lc.ui.Question, status: "ac"|"notac")

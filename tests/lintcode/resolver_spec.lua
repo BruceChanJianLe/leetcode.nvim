@@ -17,6 +17,10 @@ describe("lintcode resolver", function()
         end)
     end
 
+    local function map_file()
+        return require("leetcode.config").storage.cache:joinpath("lintcode_map.json")
+    end
+
     local q = {
         title = "Meeting Rooms II",
         title_slug = "meeting-rooms-ii",
@@ -62,7 +66,7 @@ describe("lintcode resolver", function()
                 { problem_id = 919, title = "Meeting Rooms II" },
             }
         end)
-        assert.are.same({ id = 919, source = "title" }, resolver.by_title("Meeting Rooms II"))
+        assert.are.same({ id = 919 }, resolver.by_title("Meeting Rooms II"))
 
         helpers.mock(mocks, api, "search", function()
             return {
@@ -73,13 +77,18 @@ describe("lintcode resolver", function()
         assert.is_nil(resolver.by_title("Meeting Rooms II"))
     end)
 
-    it("prefers a stored mapping over network lookups", function()
-        resolver.set(q.title_slug, { id = 42, source = "user" })
-        serve({ [42] = { id = 42, testcase_sample = "[[0,30],[5,10]]" } })
+    it("remembers a resolved twin and skips network lookups next time", function()
+        helpers.mock(mocks, api, "resolve_slug", function(slug)
+            table.insert(calls, "slug:" .. slug)
+            return 42
+        end)
+        serve({ [42] = { id = 42 } })
+        resolver.resolve(q)
+        calls = {}
 
         local res = resolver.resolve(q)
 
-        assert.are.same({ id = 42, source = "user", confidence = "example" }, res.mapping)
+        assert.are.same({ id = 42 }, res.mapping)
         assert.are.same({ "problem:42" }, calls)
     end)
 
@@ -92,9 +101,8 @@ describe("lintcode resolver", function()
 
         local res = resolver.resolve(q)
 
-        assert.are.same({ id = 919, source = "slug", confidence = "signature" }, res.mapping)
+        assert.are.same({ id = 919 }, res.mapping)
         assert.are.same({ "slug:meeting-rooms-ii", "problem:919" }, calls)
-        assert.are.same({ id = 919, source = "slug" }, resolver.get(q.title_slug))
     end)
 
     it("skips a redirect to a deleted problem and falls back to the title", function()
@@ -108,7 +116,7 @@ describe("lintcode resolver", function()
 
         local res = resolver.resolve(q)
 
-        assert.are.same({ id = 919, source = "title", confidence = "none" }, res.mapping)
+        assert.are.same({ id = 919 }, res.mapping)
         assert.is_nil(res.err)
     end)
 
@@ -123,7 +131,7 @@ describe("lintcode resolver", function()
         assert.are.same(461, res.mapping.id)
         assert.are.same(1001, res.err.code)
         assert.is_nil(res.problem)
-        assert.is_nil(resolver.get(q.title_slug))
+        assert.is_false(map_file():exists())
     end)
 
     it("reports no twin when nothing matches", function()
@@ -147,21 +155,14 @@ describe("lintcode resolver", function()
         assert.are.same("LintCode: curl failed", res.err.msg)
     end)
 
-    it("stores ids and sources only", function()
-        resolver.set("two-sum", { id = 56, source = "title", confidence = "example" })
+    it("stores LintCode ids only", function()
+        helpers.mock(mocks, api, "resolve_slug", function()
+            return 919
+        end)
+        serve({ [919] = { id = 919, title = "Meeting Rooms II", description = "secret" } })
 
-        assert.are.same({ ["two-sum"] = { id = 56, source = "title" } }, resolver.read())
-        assert.is_true(resolver.unset("two-sum"))
-        assert.is_false(resolver.unset("two-sum"))
-    end)
+        resolver.resolve(q)
 
-    it("grades how well a twin matches LeetCode's public signature and examples", function()
-        assert.are.same("example", resolver.verify(q, { testcase_sample = "[[0, 30], [5, 10]]\n" }))
-        assert.are.same("signature", resolver.verify(q, { testcase_sample = "[[9,9]]" }))
-        assert.are.same("none", resolver.verify(q, { testcase_sample = "[[9,9]]\n3" }))
-        assert.are.same(
-            "none",
-            resolver.verify({ testcase_list = vim.NIL }, { testcase_sample = vim.NIL })
-        )
+        assert.are.same({ [q.title_slug] = { id = 919 } }, vim.json.decode(map_file():read()))
     end)
 end)

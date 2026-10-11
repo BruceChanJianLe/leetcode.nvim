@@ -2,7 +2,6 @@ local api = require("leetcode.lintcode.api")
 local langs = require("leetcode.lintcode.langs")
 local normalizer = require("leetcode.lintcode.normalizer")
 local resolver = require("leetcode.lintcode.resolver")
-local status = require("leetcode.lintcode.status")
 local token = require("leetcode.lintcode.token")
 local config = require("leetcode.config")
 local log = require("leetcode.logger")
@@ -20,18 +19,6 @@ local LintCode = {
     -- a test run reuses one judge slot per problem, which keeps showing the previous
     -- verdict until the judge picks the new run up; the web editor waits this long too
     test_settle = 8,
-}
-
-local sources = {
-    user = "mapped by hand",
-    slug = "same slug",
-    title = "same title",
-}
-
-local confidences = {
-    example = "same example",
-    signature = "same signature",
-    none = "unverified",
 }
 
 ---Resolves the LintCode twin of a premium LeetCode question.
@@ -55,12 +42,8 @@ function LintCode.fetch(question, q)
     elseif res.err then
         log.error("Could not load the LintCode twin: " .. (res.err.msg or "unknown error"))
     else
-        log.warn(
-            ("Question is for premium users only and has no free LintCode twin.\nOpen it in the browser: %s\nOr map it by hand: `:Leet lintcode map id=<lintcode-id> slug=%s`"):format(
-                link,
-                q.title_slug
-            )
-        )
+        local msg = "Question is for premium users only and has no free LintCode twin."
+        log.warn(("%s\nOpen it on LintCode in the browser: %s"):format(msg, api.web))
     end
 end
 
@@ -87,17 +70,6 @@ function LintCode.link(question)
     return ("%s/problem/%d/"):format(api.web, question.q.lintcode.id)
 end
 
-function LintCode.note(question)
-    local lc = question.q.lintcode
-    return {
-        ("via LintCode %d · %s"):format(lc.id, lc.title),
-        ("(%s, %s)"):format(
-            sources[lc.source] or lc.source,
-            confidences[lc.confidence] or lc.confidence
-        ),
-    }
-end
-
 ---Reading needs no account; running and submitting do.
 function LintCode.ready()
     if not token.read() then
@@ -105,13 +77,9 @@ function LintCode.ready()
     end
 end
 
-function LintCode.status(question)
-    return status.get(question.q.title_slug)
-end
+function LintCode.status() end
 
-function LintCode.record_status(question, s)
-    status.set(question.q.title_slug, s)
-end
+function LintCode.record_status() end
 
 ---@param payload table
 ---@param callback fun(id: integer|nil, err: lc.err)

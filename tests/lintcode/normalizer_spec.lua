@@ -45,7 +45,7 @@ describe("lintcode normalizer", function()
         total_submissions = 1234,
     }
 
-    local mapping = { id = 7, source = "slug", confidence = "example" }
+    local mapping = { id = 7 }
 
     it("builds a question from the LintCode twin, keeping LeetCode's identity", function()
         local q = normalizer.question(leetcode, problem, mapping)
@@ -58,10 +58,7 @@ describe("lintcode normalizer", function()
         assert.are.same(leetcode.meta_data, q.meta_data)
         assert.are.same({ acRate = "40%", totalSubmission = "1234" }, q.stats)
         assert.are.same({}, q.hints)
-        assert.are.same(
-            { id = 7, title = "Pair Sums", source = "slug", confidence = "example" },
-            q.lintcode
-        )
+        assert.are.same({ id = 7 }, q.lintcode)
         assert.are.same(vim.NIL, leetcode.content, "the LeetCode question is not modified")
     end)
 

@@ -17,18 +17,13 @@ local function file()
 end
 
 ---Extracts the refresh JWT from a pasted value: the token itself (as stored under
----`@JWT:REFRESH_TOKEN`), quoted or prefixed with `Bearer`, or a `Cookie` header
----carrying LintCode's `refresh` cookie.
+---`@JWT:REFRESH_TOKEN`), or a `Cookie` header or cookie string carrying LintCode's
+---`refresh` cookie.
 ---@param str string
 ---@return string|nil
 function Token.parse(str)
     local token = vim.trim(str or ""):gsub("^[Cc]ookie:%s*", "")
     token = token:match("%f[%w_]refresh=([^;%s]+)") or token
-    token = token
-        :gsub("^[\"']", "")
-        :gsub("[\"']$", "")
-        :gsub("^[Aa]uthorization:%s*", "")
-        :gsub("^[Bb]earer%s+", "")
 
     if token:match("^[%w_-]+%.[%w_-]+%.[%w_-]+$") then
         return token

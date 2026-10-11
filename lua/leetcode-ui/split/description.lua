@@ -132,12 +132,6 @@ function Description:populate()
     end
     header:endgrp()
 
-    local provider = self.question.provider
-    for _, line in ipairs(provider.note and provider.note(self.question) or {}) do
-        header:append(line, "leetcode_alt")
-        header:endgrp()
-    end
-
     local show_stats = self.show_stats
 
     if show_stats then

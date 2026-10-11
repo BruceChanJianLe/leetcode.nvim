@@ -106,50 +106,6 @@ function cmd.lintcode_logout()
     log.info("LintCode token deleted")
 end
 
----@param options table<string, string[]>
----@return string|nil
-local function lintcode_slug(options)
-    local slug = options.slug and options.slug[1]
-    if slug then
-        return slug
-    end
-
-    local q = require("leetcode.utils").curr_question()
-    return q and q.q.title_slug
-end
-
----@param options table<string, string[]>
-function cmd.lintcode_map(options)
-    local id = tonumber(options.id and options.id[1] or "")
-    if not id then
-        return log.error("Usage: `Leet lintcode map id=<lintcode id> [slug=<leetcode slug>]`")
-    end
-
-    local slug = lintcode_slug(options)
-    if not slug then
-        return
-    end
-
-    require("leetcode.lintcode.resolver").set(slug, { id = id, source = "user" })
-    log.info(
-        ("`%s` now opens LintCode problem %d. Reopen the question to load it."):format(slug, id)
-    )
-end
-
----@param options table<string, string[]>
-function cmd.lintcode_unmap(options)
-    local slug = lintcode_slug(options)
-    if not slug then
-        return
-    end
-
-    if require("leetcode.lintcode.resolver").unset(slug) then
-        log.info(("Removed the LintCode mapping of `%s`"):format(slug))
-    else
-        log.warn(("`%s` has no LintCode mapping"):format(slug))
-    end
-end
-
 function cmd.sign_out()
     cmd.menu()
 
@@ -724,14 +680,6 @@ cmd.commands = {
     lintcode = {
         login = { cmd.lintcode_login },
         logout = { cmd.lintcode_logout },
-        map = {
-            cmd.lintcode_map,
-            _args = arguments.lintcode_map,
-        },
-        unmap = {
-            cmd.lintcode_unmap,
-            _args = arguments.lintcode_unmap,
-        },
     },
     cache = {
         update = { cmd.cache_update },
