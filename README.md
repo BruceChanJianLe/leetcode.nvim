@@ -252,8 +252,8 @@ lintcode = { -- solve premium questions on their free lintcode.com twin
   separately: logging in or out of one never touches the other.
 - The twin is found by its stored match from an earlier visit, then by
   [LintCode]'s redirect for the [LeetCode] slug, then by the only [LintCode]
-  problem with an identical title. When nothing matches, open it on
-  [LintCode] in the browser.
+  problem with an identical title. When nothing matches, the warning links
+  the question so you can open it in the browser.
 - [LintCode] versions can differ from [LeetCode]'s (signatures, input
   formats, sometimes the expected answer), so solutions are kept in their own
   `*.lintcode.*` files.

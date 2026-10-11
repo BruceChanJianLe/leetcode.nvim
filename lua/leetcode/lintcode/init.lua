@@ -43,7 +43,7 @@ function LintCode.fetch(question, q)
         log.error("Could not load the LintCode twin: " .. (res.err.msg or "unknown error"))
     else
         local msg = "Question is for premium users only and has no free LintCode twin."
-        log.warn(("%s\nOpen it on LintCode in the browser: %s"):format(msg, api.web))
+        log.warn(("%s\nOpen it in the browser: %s"):format(msg, link))
     end
 end
 

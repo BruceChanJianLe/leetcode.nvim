@@ -287,10 +287,18 @@ describe("lintcode provider", function()
     end)
 
     it("refuses a premium question without a free twin", function()
+        local warnings = {}
+        helpers.mock(mocks, require("leetcode.logger"), "warn", function(msg)
+            table.insert(warnings, msg)
+        end)
         helpers.mock(mocks, resolver, "resolve", function()
             return {}
         end)
         assert.is_nil(lintcode.fetch(fake_question(), { title_slug = "x", title = "X" }))
+        assert.are.same({
+            "Question is for premium users only and has no free LintCode twin.\n"
+                .. "Open it in the browser: https://leetcode.com/problems/sum-of-pairs/",
+        }, warnings)
 
         helpers.mock(mocks, resolver, "resolve", function()
             return { mapping = { id = 461 }, err = { code = 1001, msg = "VIP" } }
