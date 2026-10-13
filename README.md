@@ -77,6 +77,10 @@ To see full configuration types see [template.lua](./lua/leetcode/config/templat
         translate_problems = true, ---@type boolean
     },
 
+    lintcode = { -- solve premium questions on their free lintcode.com twin
+        enabled = false, ---@type boolean
+    },
+
     ---@type lc.storage
     storage = {
         home = vim.fn.stdpath("data") .. "/leetcode",
@@ -222,6 +226,40 @@ cn = { -- leetcode.cn
     translate_problems = true, ---@type boolean
 },
 ```
+
+### lintcode
+
+Open [LeetCode] Premium questions on their free [LintCode] twin when your
+account has no Premium. Free questions keep using [LeetCode] as usual.
+
+```lua
+lintcode = { -- solve premium questions on their free lintcode.com twin
+    enabled = false, ---@type boolean
+},
+```
+
+- It is opt-in: with the default `enabled = false`, premium questions stay
+  locked exactly as before.
+- With only your [LeetCode] cookie, premium questions open read-only: the
+  statement and starter code come from [LintCode] and need no login, but
+  running and submitting them asks you to run `:Leet lintcode login` first.
+- Running and submitting needs a [LintCode] login: run `:Leet lintcode login`
+  and paste the value of `@JWT:REFRESH_TOKEN` from [LintCode]'s local storage
+  (DevTools → Application → Local Storage → `https://www.lintcode.com`) while
+  signed in there, or a `Cookie` header or cookie string that carries
+  [LintCode]'s `refresh` cookie.
+- The [LeetCode] cookie and the [LintCode] token are stored and sent
+  separately: logging in or out of one never touches the other.
+- The twin is found by its stored match from an earlier visit, then by
+  [LintCode]'s redirect for the [LeetCode] slug, then by the only [LintCode]
+  problem with an identical title. When nothing matches, the warning links
+  the question so you can open it in the browser.
+- [LintCode] versions can differ from [LeetCode]'s (signatures, input
+  formats, sometimes the expected answer), so solutions are kept in their own
+  `*.lintcode.*` files.
+- Some twins are VIP-only on [LintCode] too and cannot be opened.
+- [LintCode] has no public API: this uses the endpoints its website uses,
+  which may change without notice.
 
 ### storage
 
@@ -405,6 +443,11 @@ image_support = true,
 - `cache`
   - `update` fetches all available problems and updates the local cache of [leetcode.nvim]
 
+- `lintcode` see [`lintcode`](#lintcode)
+  - `login` opens a prompt to enter a [LintCode] token
+
+  - `logout` deletes the stored [LintCode] token
+
 #### Some commands can take optional arguments. To stack argument values separate them by a `,`
 
 - `Leet list`
@@ -533,6 +576,7 @@ You can then exit [leetcode.nvim] using `:Leet exit` command
 [lazy.nvim]: https://github.com/folke/lazy.nvim
 [leetcode]: https://leetcode.com
 [leetcode.cn]: https://leetcode.cn
+[lintcode]: https://www.lintcode.com
 [leetcode.nvim]: https://github.com/kawre/leetcode.nvim
 [neovim]: https://github.com/neovim/neovim
 [nerd-font]: https://www.nerdfonts.com

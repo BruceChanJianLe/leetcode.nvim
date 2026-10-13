@@ -4,6 +4,7 @@ local ui_utils = require("leetcode-ui.utils")
 local utils = require("leetcode.utils")
 local Question = require("leetcode-ui.question")
 local Picker = require("leetcode.picker")
+local providers = require("leetcode.provider")
 
 ---@class leet.Picker.Question: leet.Picker
 local P = {}
@@ -90,7 +91,7 @@ function P.ordinal(item)
 end
 
 function P.select(selection, close)
-    if selection.paid_only and not config.auth.is_premium then
+    if providers.is_locked(selection.paid_only) then
         return log.warn("Question is for premium users only")
     end
     if close then

@@ -54,6 +54,10 @@ local M = {
         translate_problems = true, ---@type boolean
     },
 
+    lintcode = { -- solve premium questions on their free lintcode.com twin
+        enabled = false, ---@type boolean
+    },
+
     ---@type lc.storage
     storage = {
         home = vim.fn.stdpath("data") .. "/leetcode",

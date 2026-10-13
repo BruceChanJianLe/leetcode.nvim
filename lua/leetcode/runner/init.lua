@@ -1,13 +1,7 @@
 ---@module 'plenary'
 
 local log = require("leetcode.logger")
-local interpreter = require("leetcode.api.interpreter")
-local config = require("leetcode.config")
 local Judge = require("leetcode.logger.spinner.judge")
-
----@type Path
-local leetbody = config.storage.cache:joinpath("body")
-leetbody:touch()
 
 ---@class lc.Runner
 ---@field question lc.ui.Question
@@ -32,6 +26,18 @@ end)
 
 Runner.stop = function()
     Runner.running = false
+end
+
+---Whether the question's provider can run code now, hinting what to do if not.
+---@return boolean
+function Runner:ready()
+    local provider = self.question.provider
+    local hint = provider.ready and provider.ready(self.question)
+    if hint then
+        log.warn(hint)
+        return false
+    end
+    return true
 end
 
 function Runner:handle(submit)
@@ -68,8 +74,7 @@ function Runner:handle(submit)
         end
     end
 
-    leetbody:write(vim.json.encode(body), "w")
-    interpreter.run(submit, question, leetbody:absolute(), callback)
+    question.provider.run(question, submit, body, callback)
 end
 
 ---@param question lc.ui.Question
